@@ -105,10 +105,10 @@ void insertion_sort(vector<int>& arr) {
 // shell Sort
 void shell_sort(vector<int>& arr) {
     comparison_count = 0;
-    for (size_t gap = arr.size() / 2; gap > 0; gap /= 2) {
-        for (size_t i = gap; i < arr.size(); i++) {
+    for (int gap = arr.size() / 2; gap > 0; gap /= 2) {
+        for (int i = gap; i < arr.size(); i++) {
             int temp = arr[i];
-            size_t j;
+            int j;
             for (j = i; j >= gap && (++comparison_count, arr[j - gap] > temp); j -= gap) {
                 arr[j] = arr[j - gap];
             }
@@ -120,20 +120,20 @@ void shell_sort(vector<int>& arr) {
 // binary insertion sort
 void binary_insertion_sort(vector<int>& arr) {
     comparison_count = 0;
-    for (size_t i = 1; i < arr.size(); i++) {
+    for (int i = 1; i < arr.size(); i++) {
         int key = arr[i];
-        size_t left = 0, right = i - 1;
+        int left = 0, right = i - 1;
 
         while (left <= right) {
-            size_t mid = left + (right - left) / 2;
+            int mid = left + (right - left) / 2;
             if (++comparison_count, arr[mid] <= key)
                 left = mid + 1;
             else
                 right = mid - 1;
         }
 
-        for (size_t j = i; j > left; j--) {
-            arr[j] = arr[j - 1];
+        for (int j = i - 1; j >= left; j--) {
+            arr[j + 1] = arr[j];
         }
         arr[left] = key;
     }
@@ -162,11 +162,11 @@ void generate_data(vector<int>& arr, int data_type) {
 }
 
 // Function to log results to a file
-void log_results(ofstream& file, const string& data_order, int data_size, const string& algorithm, long long comparisons, long long time) {
+void write_result_to_file(ofstream& file, const string& data_order, int data_size, const string& algorithm, long long comparisons, long long time) {
     file << data_order << "\t" << data_size << "\t" << algorithm << "\t" << comparisons << "\t" << time << "\n";
 }
 
-// Function to execute and measure sorting algorithms
+// Function to execute and measure sorting algorithms ~ run_expriment function 
 void execute_algorithm(void (*sort_function)(vector<int>&), const string& algorithm_name, vector<int> data, const string& data_order, int data_size, ofstream& output_file) {
     cout << "Running: " << algorithm_name << " | Data order: " << data_order << " | Size: " << data_size << endl;
 
@@ -175,7 +175,7 @@ void execute_algorithm(void (*sort_function)(vector<int>&), const string& algori
     auto end = high_resolution_clock::now();
 
     long long duration = duration_cast<milliseconds>(end - start).count();
-    log_results(output_file, data_order, data_size, algorithm_name, comparison_count, duration);
+    write_result_to_file(output_file, data_order, data_size, algorithm_name, comparison_count, duration);
 }
 
 // Main program
