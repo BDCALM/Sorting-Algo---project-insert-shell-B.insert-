@@ -91,7 +91,8 @@ long long comparison_count = 0;
 // insertion sort
 void insertion_sort(vector<int>& arr) {
     comparison_count = 0;
-    for (int i = 1; i < arr.size(); i++) {
+    int n = arr.size();
+    for (int i = 1; i < n; i++) {
         int key = arr[i];
         int j = i - 1;
         while (j >= 0 && (++comparison_count, arr[j] > key)) {
@@ -105,8 +106,9 @@ void insertion_sort(vector<int>& arr) {
 // shell Sort
 void shell_sort(vector<int>& arr) {
     comparison_count = 0;
-    for (int gap = arr.size() / 2; gap > 0; gap /= 2) {
-        for (int i = gap; i < arr.size(); i++) {
+    int n = arr.size();
+    for (int gap = n / 2; gap > 0; gap /= 2) {
+        for (int i = gap; i < n; i++) {
             int temp = arr[i];
             int j;
             for (j = i; j >= gap && (++comparison_count, arr[j - gap] > temp); j -= gap) {
@@ -120,7 +122,8 @@ void shell_sort(vector<int>& arr) {
 // binary insertion sort
 void binary_insertion_sort(vector<int>& arr) {
     comparison_count = 0;
-    for (int i = 1; i < arr.size(); i++) {
+    int n = arr.size();
+    for (int i = 1; i < n; i++) {
         int key = arr[i];
         int left = 0, right = i - 1;
 
@@ -139,75 +142,229 @@ void binary_insertion_sort(vector<int>& arr) {
     }
 }
 
-// Function to generate data based on data type
+// Function to generate data based on data type; fixing the function into vector<arr> instead of int*a (the example function)
 void generate_data(vector<int>& arr, int data_type) {
-    size_t n = arr.size();
+    int n = arr.size();
     switch (data_type) {
     case 0: // Random data
-        for (size_t i = 0; i < n; i++) arr[i] = rand() % n;
+        for (int i = 0; i < n; i++) arr[i] = rand() % n;
         break;
     case 1: // Sorted data
-        for (size_t i = 0; i < n; i++) arr[i] = i;
+        for (int i = 0; i < n; i++) arr[i] = i;
         break;
     case 2: // Reverse sorted data
-        for (size_t i = 0; i < n; i++) arr[i] = n - i - 1;
+        for (int i = 0; i < n; i++) arr[i] = n - i - 1;
         break;
     case 3: // Nearly sorted data
-        for (size_t i = 0; i < n; i++) arr[i] = i;
-        for (size_t i = 0; i < 10; i++) swap(arr[rand() % n], arr[rand() % n]);
+        for (int i = 0; i < n; i++) arr[i] = i;
+        for (int i = 0; i < 10; i++) swap(arr[rand() % n], arr[rand() % n]);
         break;
     default:
         cerr << "Invalid data type!" << endl;
     }
 }
 
-// Function to log results to a file
-void write_result_to_file(ofstream& file, const string& data_order, int data_size, const string& algorithm, long long comparisons, long long time) {
-    file << data_order << "\t" << data_size << "\t" << algorithm << "\t" << comparisons << "\t" << time << "\n";
+// Sort function dispatcher
+void sort_dispatcher(const string& algorithm, vector<int>& arr) {
+    if (algorithm == "insertion_sort") {
+        insertion_sort(arr);
+    }
+    else if (algorithm == "shell_sort") {
+        shell_sort(arr);
+    }
+    else if (algorithm == "binary_insertion_sort") {
+        binary_insertion_sort(arr);
+    }
+    else {
+        cerr << "Unknown algorithm: " << algorithm << endl;
+    }
 }
 
-// Function to execute and measure sorting algorithms ~ run_expriment function 
-void execute_algorithm(void (*sort_function)(vector<int>&), const string& algorithm_name, vector<int> data, const string& data_order, int data_size, ofstream& output_file) {
-    cout << "Running: " << algorithm_name << " | Data order: " << data_order << " | Size: " << data_size << endl;
+// Command 1: Run sorting algorithm on input file data
+void command_1(const string& algorithm, const string& input_file, const string& output_file) {
+    ifstream infile(input_file);
+    ofstream outfile(output_file);
+    if (!infile.is_open() || !outfile.is_open()) {
+        cerr << "Error opening file!" << endl;
+        return;
+    }
+
+    int size;
+    infile >> size;
+    vector<int> arr(size);
+    for (int i = 0; i < size; i++) infile >> arr[i];
 
     auto start = high_resolution_clock::now();
-    sort_function(data);
+    sort_dispatcher(algorithm, arr);
     auto end = high_resolution_clock::now();
 
     long long duration = duration_cast<milliseconds>(end - start).count();
-    write_result_to_file(output_file, data_order, data_size, algorithm_name, comparison_count, duration);
+    outfile << size << endl;
+    for (const auto& num : arr) outfile << num << " ";
+    outfile.close();
+
+    cout << "Algorithm: " << algorithm << "\nRunning time: " << duration << " ms\nComparisons: " << comparison_count << endl;
 }
 
-// Main program
-int main() {
-    const int sizes[] = { 10000, 30000, 50000, 100000, 300000, 500000 };
-    const string data_orders[] = { "random", "sorted", "reverse", "nearly_sorted" };
+// Command 2: Run sorting algorithm on generated data
+void command_2(const string& algorithm, int size, const string& data_order) {
+    vector<int> arr(size);
+    int data_type = (data_order == "-rand") ? 0 : (data_order == "-sorted") ? 1 : (data_order == "-rev") ? 2 : 3;
 
-    // Open output file
-    ofstream output_file("output.txt");
-    if (!output_file.is_open()) {
-        cerr << "Error: Could not open output.txt!" << endl;
+    generate_data(arr, data_type);
+    auto start = high_resolution_clock::now();
+    sort_dispatcher(algorithm, arr);
+    auto end = high_resolution_clock::now();
+
+    long long duration = duration_cast<milliseconds>(end - start).count();
+    ofstream outfile("output.txt");
+    outfile << size << endl;
+    for (const auto& num : arr) outfile << num << " ";
+    outfile.close();
+
+    cout << "Algorithm: " << algorithm << "\nData Order: " << data_order << "\nRunning time: " << duration << " ms\nComparisons: " << comparison_count << endl;
+}
+
+// Command 3: Run sorting algorithm on all data orders
+void command_3(const string& algorithm, int size) {
+    const string data_orders[] = { "random", "sorted", "reverse", "nearly sorted" };
+    for (int data_type = 0; data_type < 4; data_type++) {
+        vector<int> arr(size);
+        generate_data(arr, data_type);
+
+        auto start = high_resolution_clock::now();
+        sort_dispatcher(algorithm, arr);
+        auto end = high_resolution_clock::now();
+
+        long long duration = duration_cast<milliseconds>(end - start).count();
+        cout << "Algorithm: " << algorithm << "\nData Order: " << data_orders[data_type] << "\nRunning time: " << duration << " ms\nComparisons: " << comparison_count << endl;
+    }
+}
+
+// Command 4: Compare two algorithms on input file data
+void command_4(const string& algorithm1, const string& algorithm2, const string& input_file) {
+    ifstream infile(input_file);
+    if (!infile.is_open()) {
+        cerr << "Error opening file!" << endl;
+        return;
+    }
+
+    int size;
+    infile >> size;
+    vector<int> arr1(size), arr2(size);
+    for (int i = 0; i < size; i++) infile >> arr1[i];
+    arr2 = arr1;
+
+    // Run first algorithm
+    auto start1 = high_resolution_clock::now();
+    sort_dispatcher(algorithm1, arr1);
+    auto end1 = high_resolution_clock::now();
+
+    // Run second algorithm
+    auto start2 = high_resolution_clock::now();
+    sort_dispatcher(algorithm2, arr2);
+    auto end2 = high_resolution_clock::now();
+
+    cout << "Comparison:\n";
+    cout << "Algorithm 1: " << algorithm1 << "\nRunning time: " << duration_cast<milliseconds>(end1 - start1).count() << " ms\nComparisons: " << comparison_count << endl;
+
+    cout << "Algorithm 2: " << algorithm2 << "\nRunning time: " << duration_cast<milliseconds>(end2 - start2).count() << " ms\nComparisons: " << comparison_count << endl;
+}
+
+// Command 5: Compare two algorithms on generated data
+void command_5(const string& algorithm1, const string& algorithm2, int size, const string& data_order) {
+    vector<int> arr(size);
+    int data_type = (data_order == "-rand") ? 0 : (data_order == "-sorted") ? 1 : (data_order == "-rev") ? 2 : 3;
+    generate_data(arr, data_type);
+
+    vector<int> arr1 = arr, arr2 = arr;
+
+    // Run first algorithm
+    auto start1 = high_resolution_clock::now();
+    sort_dispatcher(algorithm1, arr1);
+    auto end1 = high_resolution_clock::now();
+
+    // Run second algorithm
+    auto start2 = high_resolution_clock::now();
+    sort_dispatcher(algorithm2, arr2);
+    auto end2 = high_resolution_clock::now();
+
+    cout << "Comparison:\n";
+    cout << "Algorithm 1: " << algorithm1 << "\nRunning time: " << duration_cast<milliseconds>(end1 - start1).count() << " ms\nComparisons: " << comparison_count << endl;
+
+    cout << "Algorithm 2: " << algorithm2 << "\nRunning time: " << duration_cast<milliseconds>(end2 - start2).count() << " ms\nComparisons: " << comparison_count << endl;
+}
+
+// Algorithm Mode: Handles commands related to a single algorithm
+void algorithm_mode(int argc, char* argv[]) {
+    if (argc < 5) {
+        cerr << "Error: Insufficient arguments for algorithm mode.\n";
+        return;
+    }
+
+    string algorithm = argv[2];
+    string option = argv[4];
+
+    if (option == "-rand" || option == "-sorted" || option == "-rev" || option == "-nsorted") {
+        // Command 2: Sorting on generated data
+        int size = stoi(argv[3]);
+        command_2(algorithm, size, option);
+    }
+    else if (isdigit(option[0])) {
+        // Command 3: Sorting on all data orders of given size
+        int size = stoi(option);
+        command_3(algorithm, size);
+    }
+    else {
+        cerr << "Error: Invalid option for algorithm mode.\n";
+    }
+}
+
+// Comparison Mode: Handles commands comparing two algorithms
+void comparison_mode(int argc, char* argv[]) {
+    if (argc < 5) {
+        cerr << "Error: Insufficient arguments for comparison mode.\n";
+        return;
+    }
+
+    string algorithm1 = argv[2];
+    string algorithm2 = argv[3];
+    string option = argv[4];
+
+    if (option == "-rand" || option == "-sorted" || option == "-rev" || option == "-nsorted") {
+        // Command 5: Compare on generated data
+        int size = stoi(argv[5]);
+        command_5(algorithm1, algorithm2, size, option);
+    }
+    else if (option.find(".txt") != string::npos) {
+        // Command 4: Compare on data from a file
+        command_4(algorithm1, algorithm2, option);
+    }
+    else {
+        cerr << "Error: Invalid option for comparison mode.\n";
+    }
+}
+
+// Main function with mode detection
+int main(int argc, char* argv[]) {
+    if (argc < 4) {
+        cerr << "Error: Invalid number of arguments.\n";
         return 1;
     }
 
-    // Write header
-    output_file << "Data Order\tData Size\tAlgorithm\tComparisons\tRunning Time (ms)\n";
+    string mode = argv[1];
 
-    // Execute experiments
-    for (int size : sizes) {
-        for (int order = 0; order < 4; order++) {
-            vector<int> data(size);
-            generate_data(data, order);
-
-            execute_algorithm(insertion_sort, "insertion_sort", data, data_orders[order], size, output_file);
-            execute_algorithm(shell_sort, "shell_sort", data, data_orders[order], size, output_file);
-            execute_algorithm(binary_insertion_sort, "binary_insertion_sort", data, data_orders[order], size, output_file);
-        }
+    if (mode == "-a") {
+        // Algorithm mode
+        algorithm_mode(argc, argv);
     }
-
-    // Close file
-    output_file.close();
-    cout << "Experiments completed. Results saved in output.txt." << endl;
+    else if (mode == "-c") {
+        // Comparison mode
+        comparison_mode(argc, argv);
+    }
+    else {
+        cerr << "Error: Unknown mode. Use -a for Algorithm mode or -c for Comparison mode.\n";
+    }
 
     return 0;
 }
